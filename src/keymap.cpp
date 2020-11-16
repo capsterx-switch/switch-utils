@@ -85,6 +85,7 @@ class Switch_Key_Map::Key_Map_Impl
 public:
   void parse_line(const char * line_)
   {
+    printf("got line %s\n", line_);
     std::string line(line_);
     auto args = split(line, '=');
     if (args.size() != 2)
@@ -197,8 +198,16 @@ private:
     SDL_Event event;
     event.type = type;
     event.key.keysym = itr->second;
+    if (type == SDL_KEYDOWN)
+    {
+      SDL_SetModState(static_cast<SDL_Keymod>(event.key.keysym.mod));
+    }
     printf("Sending event %d - %d\n", event.key.keysym.sym, event.key.keysym.mod);
     SDL_PushEvent(&event);
+    if (type == SDL_KEYUP)
+    {
+      SDL_SetModState(KMOD_NONE);
+    }
     return true;
   }
 
@@ -219,13 +228,17 @@ void
 Switch_Key_Map::
 load_file(std::ifstream & keyfile)
 {
+  printf("Parsing file...\n");
   char temp[1024]; // 1024 should be long enough
   while (!keyfile.eof()) {
+    printf("Read line\n");
     keyfile.getline(temp, 1024);
+    printf("line: %s\n", temp);
     if (keyfile.gcount() >= 1023) {
       std::cout << "Keybinder: parse error: line too long. Skipping rest of file." << std::endl;
       break;
     }
+    printf("Try parse\n");
     impl_->parse_line(temp);
   }
 }
@@ -248,6 +261,54 @@ event(SDL_Event const & event)
     impl_->key_release(event.jbutton.button);
     return true;
   }
+}
+
+}
+
+extern "C" {
+struct Switch_Key_Map
+{
+  Switch_Key_Map()
+    : k(std::make_unique<nswitch::Switch_Key_Map>())
+  {
+  }
+
+  std::unique_ptr<nswitch::Switch_Key_Map> k;
+};
+
+Switch_Key_Map * switch_keymap_create()
+{
+  printf("Creating keypmap\n");
+  auto km = new Switch_Key_Map;
+  return km;
+}
+
+int switch_keymap_load_from_file(Switch_Key_Map * km, char const * file)
+{
+  std::ifstream myfile;
+  try {
+    printf("Opening file %s\n", file);
+    myfile.open(file);
+    if (!myfile.is_open())
+    {
+      return -1;
+    }
+    km->k->load_file(myfile);
+  } catch (std::exception const &) {
+    printf("Got exception\n");
+    return -1;
+  }
+  return true;
+}
+
+int switch_keymap_event(Switch_Key_Map * km, SDL_Event const * event)
+{
+  return km->k->event(*event);
+}
+
+void switch_keymap_destroy(Switch_Key_Map * km)
+{
+  delete km;
 }
 
 }

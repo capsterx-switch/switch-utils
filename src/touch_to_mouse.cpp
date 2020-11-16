@@ -30,3 +30,10 @@ bool touch_to_mouse (int screenx, int screeny, SDL_Event & event)
   return false;
 }
 }
+
+extern "C" {
+  int switch_touch_to_mouse(int screenx, int screeny, SDL_Event * event)
+  {
+    return nswitch::touch_to_mouse(screenx, screeny, *event);
+  }
+}

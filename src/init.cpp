@@ -12,6 +12,7 @@ void init()
   }
   socketInitializeDefault();
   nxlinkConnectToHost(true, false);
+  printf("connected to hostd\n");
   romfsInit();
   printf("init finished\n");
 }
@@ -23,4 +24,15 @@ void deinit()
   nsExit();
 }
 
+}
+
+extern "C" {
+  void switch_init()
+  {
+    nswitch::init();
+  }
+  void switch_deinit()
+  {
+    nswitch::deinit();
+  }
 }

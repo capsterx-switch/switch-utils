@@ -38,3 +38,10 @@ bool rstick_to_mouse(SDL_Event const & event)
 }
 
 }
+
+extern "C" {
+int switch_rstick_to_mouse(SDL_Event const * event)
+{
+  return nswitch::rstick_to_mouse(*event);
+}
+}
