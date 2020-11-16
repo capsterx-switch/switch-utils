@@ -1,24 +1,31 @@
+#include <switch/joymap.hpp>
 #include <switch/keymap.hpp>
+#include <switch/string.hpp>
 #include <SDL.h>
+#include <vector>
+#include <map>
+#include <iostream>
+#include <fstream>
 
 namespace {
-auto Switch_Key_Map = std::vector<std::pair<std::string, int>>{
-  {"A", 0},
-  {"B", 1},
-  {"X", 2},
-  {"Y", 3},
-  {"LSTICK", 4},
-  {"RSTICK", 5},
-  {"L", 6},
-  {"R", 7},
-  {"ZL", 8},
-  {"ZR", 9},
-  {"PLUS", 10},
-  {"MINUS", 11},
-  {"DLEFT", 12},
-  {"DUP", 13},
-  {"DRIGHT", 14},
-  {"DDOWN", 15}};
+const std::vector<std::pair<std::string, int>> Switch_Key_Mapping = {
+  {"A", static_cast<int>(nswitch::Switch_Joy::A)},
+  {"B", static_cast<int>(nswitch::Switch_Joy::B)},
+  {"X", static_cast<int>(nswitch::Switch_Joy::X)},
+  {"Y", static_cast<int>(nswitch::Switch_Joy::Y)},
+  {"LSTICK", static_cast<int>(nswitch::Switch_Joy::LSTICK)},
+  {"RSTICK", static_cast<int>(nswitch::Switch_Joy::RSTICK)},
+  {"L", static_cast<int>(nswitch::Switch_Joy::L)},
+  {"R", static_cast<int>(nswitch::Switch_Joy::R)},
+  {"ZL", static_cast<int>(nswitch::Switch_Joy::ZL)},
+  {"ZR", static_cast<int>(nswitch::Switch_Joy::ZR)},
+  {"PLUS", static_cast<int>(nswitch::Switch_Joy::PLUS)},
+  {"MINUS", static_cast<int>(nswitch::Switch_Joy::MINUS)},
+  {"DLEFT", static_cast<int>(nswitch::Switch_Joy::DLEFT)},
+  {"DUP", static_cast<int>(nswitch::Switch_Joy::DUP)},
+  {"DRIGHT", static_cast<int>(nswitch::Switch_Joy::DRIGHT)},
+  {"DDOWN", static_cast<int>(nswitch::Switch_Joy::DDOWN)}
+};
 
 auto SDLKeyStringTable = std::vector<std::pair<std::string, SDL_Keycode>>{
 	{"BACKSPACE", SDLK_BACKSPACE},
@@ -76,7 +83,7 @@ namespace nswitch {
 class Switch_Key_Map::Key_Map_Impl
 {
 public:
-  void parse_line(const char *)
+  void parse_line(const char * line_)
   {
     std::string line(line_);
     auto args = split(line, '=');
@@ -92,7 +99,7 @@ public:
     {
       trim(str);
       bool valid=false;
-      for (auto && key_map : Switch_Key_Map)
+      for (auto && key_map : Switch_Key_Mapping)
       {
         printf("Checking '%s' - '%s'\n", key_map.first.c_str(), str.c_str());
         if (key_map.first == str)
@@ -146,11 +153,11 @@ public:
               return;
             }
         } else {
-          for (size_t i = 0; strlen(SDLKeyStringTable[i].s) > 0; i++)
+          for (auto && pair : SDLKeyStringTable)
           {
-            if (str == SDLKeyStringTable[i].s)
+            if (str == pair.first)
             {
-              k.sym = SDLKeyStringTable[i].k;
+              k.sym = pair.second;
               break;
             }
           }
@@ -210,7 +217,7 @@ Switch_Key_Map::~Switch_Key_Map()
    
 void 
 Switch_Key_Map::
-load_file(std::ifstream &)
+load_file(std::ifstream & keyfile)
 {
   char temp[1024]; // 1024 should be long enough
   while (!keyfile.eof()) {
@@ -219,7 +226,7 @@ load_file(std::ifstream &)
       std::cout << "Keybinder: parse error: line too long. Skipping rest of file." << std::endl;
       break;
     }
-    impl_->parse_line(line);
+    impl_->parse_line(temp);
   }
 }
 
@@ -233,11 +240,13 @@ event(SDL_Event const & event)
   }
   if (event.type == SDL_JOYBUTTONDOWN)
   {
-    return impl->key_press(event.jbutton.button);
+    impl_->key_press(event.jbutton.button);
+    return true;
   }
   else
   {
-    return impl->key_release(event.jbutton.button);
+    impl_->key_release(event.jbutton.button);
+    return true;
   }
 }
 

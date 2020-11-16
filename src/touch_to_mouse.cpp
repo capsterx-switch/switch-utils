@@ -1,9 +1,9 @@
-#include "touch_to_mouse.hpp"
-#include "sdl_mouse_events.hpp"
+#include "switch/touch_to_mouse.hpp"
+#include "switch/sdl_mouse_events.hpp"
 #include <SDL.h>
 
-
-bool touch_to_mouse (size_t x, size_t y, SDL_Event & event)
+namespace nswitch {
+bool touch_to_mouse (int screenx, int screeny, SDL_Event & event)
 {
   if (event.type == SDL_FINGERDOWN || event.type == SDL_FINGERUP)
   {
@@ -13,8 +13,8 @@ bool touch_to_mouse (size_t x, size_t y, SDL_Event & event)
      	numFingers = SDL_GetNumTouchFingers(event.tfinger.touchId);
      }
      if (numFingers == 1) {
-       int x = x * event.tfinger.x;
-       int y = y * event.tfinger.y;
+       int x = screenx * event.tfinger.x;
+       int y = screeny * event.tfinger.y;
        SDL_SendMouseMotion(NULL, 0, 0, x, y);
        if(event.type == SDL_FINGERDOWN)
        {
@@ -28,4 +28,5 @@ bool touch_to_mouse (size_t x, size_t y, SDL_Event & event)
      return true;
   } 
   return false;
+}
 }

@@ -1,5 +1,9 @@
 #pragma once
-typedef Uint32 SDL_MouseID;
+#include <stdint.h>
+
+typedef uint32_t SDL_MouseID;
+struct SDL_Window;
+
 extern "C" {
 int SDL_SendMouseMotion	(SDL_Window *window, SDL_MouseID mouseID,
 		int 	relative,
@@ -8,7 +12,7 @@ int SDL_SendMouseMotion	(SDL_Window *window, SDL_MouseID mouseID,
 		);
 int SDL_SendMouseButton	(SDL_Window * 	window,
 		SDL_MouseID 	mouseID,
-		Uint8 	state,
-		Uint8 	button 
+		uint8_t 	state,
+		uint8_t 	button 
 		);
 }

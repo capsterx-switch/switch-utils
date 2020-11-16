@@ -1,40 +1,38 @@
-#include "rstick_to_mouse.hpp"
-#include "sdl_mouse_events.hpp"
+#include "switch/rstick_to_mouse.hpp"
+#include "switch/sdl_mouse_events.hpp"
+#include "switch/joymap.hpp"
 #include <SDL.h>
 
 
 namespace nswitch {
-bool rstick_to_mouse(size_t screenx, size_t screeny, SDL_Event const & event)
+bool rstick_to_mouse(SDL_Event const & event)
 {
-  if (event.type != SDL_JOYAXISMOTION)
+  if (event.type == SDL_JOYAXISMOTION)
   {
-    return false;
+    if (event.caxis.axis == 2 || event.caxis.axis == 3)
+    {
+      int x;
+      int y;
+      SDL_GetMouseState(&x, &y);
+      if(event.caxis.axis == 2)
+      {
+        x += (event.caxis.value / 0x1500);
+      }
+      else
+      {
+        y += (event.caxis.value / 0x1500);
+      }
+      SDL_SendMouseMotion(NULL, 0, 0, x, y);
+      return true;
+    }
   }
-
-  if (event.caxis.axis == 2 || sdl_event.caxis.axis == 3)
+  else if (event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
   {
-    size_t x;
-    size_t y;
-    if(event->caxis.axis == 2)
+    if (event.jbutton.button == (int)Switch_Joy::RSTICK)
     {
-      x = (event.caxis.value / 0x1500);
-      y = 0;
+      SDL_SendMouseButton(NULL, 0, event.type == SDL_JOYBUTTONDOWN ? SDL_PRESSED : SDL_RELEASED, SDL_BUTTON_LEFT);
+      return true;
     }
-    else
-    {
-      x = 0;
-      y = (even.caxis.value / 0x1500);
-    }
-    if( x > screenx - 1 )
-    {
-        x = screenx - 1;
-    }
-    if( y > screeny - 1 )
-    {
-        y = screeny - 1;
-    }
-    SDL_SendMouseMotion(NULL, 0, 1, x, y);
-    return true;
   }
   return false;
 }

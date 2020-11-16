@@ -1,4 +1,7 @@
 #include <switch/string.hpp>
+#include <string>
+#include <cctype>
+#include <algorithm>
 
 namespace nswitch {
 void ltrim(std::string &s) {
@@ -26,9 +29,9 @@ split(
     bool trimEmpty
     )
 {
-    typedef std::basic_string<charType> my_string;
+    typedef std::string my_string;
     typedef typename my_string::size_type my_size_type;
-    tokens.clear();
+    std::vector<std::string> tokens;
     if (str.empty())
     {
         return {};
@@ -60,6 +63,6 @@ split(
     {
         tokens.push_back(str.substr(left));
     }
-    return std::move(tokens);
+    return tokens;
 }
 }

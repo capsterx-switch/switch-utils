@@ -1,9 +1,11 @@
 #pragma once
 #include <iosfwd>
+#include <memory>
 
-class SDL_Event;
+union SDL_Event;
 
 namespace nswitch {
+
 class Switch_Key_Map
 {
 public:
