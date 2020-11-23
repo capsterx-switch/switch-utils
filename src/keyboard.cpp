@@ -1,5 +1,6 @@
 #include "switch/keyboard.hpp"
 #include <switch.h>
+#include <cstring>
 
 namespace nswitch {
 std::string get_keyboard_input(std::string const & default_str)
@@ -26,4 +27,17 @@ std::string get_keyboard_input(std::string const & default_str)
     }
     return default_str;
 }
+}
+
+extern "C" {
+  int switch_get_keyboard_input(char * input, size_t len)
+  {
+    auto val = nswitch::get_keyboard_input(input);
+    if (val.size() < len)
+    {
+      len = val.size();
+    }
+    strncpy(input, val.c_str(), len);
+    return len;
+  }
 }

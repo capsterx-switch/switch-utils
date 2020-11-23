@@ -55,7 +55,7 @@ if (ENABLE_GDB)
 endif()
 
 set(cross_prefix aarch64-none-elf-)
-set(arch_flags "-mtune=cortex-a57 -ffunction-sections -march=armv8-a+crc+crypto -mtp=soft -fPIE")
+set(arch_flags "-mtune=cortex-a57 -ffunction-sections -march=armv8-a+crc+crypto -mtp=soft -fPIE -D_GNU_SOURCE")
 set(inc_flags "-I${LIBNX}/include -I${DEVKITPRO}/portlibs/switch/include ${arch_flags}")
 set(link_flags "${gdb_link} -L${LIBNX}/lib -L${DEVKITPRO}/portlibs/switch/lib -specs=${LIBNX}/switch.specs ${arch_flags}")
 

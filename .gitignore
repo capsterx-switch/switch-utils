@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+*.swp
+
+*.elf
+*.nacp
+*.nro
+*.nso
+*.pfs0
+build

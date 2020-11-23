@@ -1,28 +1,34 @@
 #include "switch/rstick_to_mouse.hpp"
-#include "switch/sdl_mouse_events.hpp"
 #include "switch/joymap.hpp"
-#include <SDL.h>
+#include "SDL_mouse_internals.h"
 
 
 namespace nswitch {
+
+static int rstick_motion_modifier = 0x1500;
+
 bool rstick_to_mouse(SDL_Event const & event)
 {
   if (event.type == SDL_JOYAXISMOTION)
   {
     if (event.caxis.axis == 2 || event.caxis.axis == 3)
     {
-      int x;
-      int y;
-      SDL_GetMouseState(&x, &y);
+      int x=0;
+      int y=0;
+      //SDL_GetMouseState(&x, &y);
+      //printf("Original %d/%d ", x, y);
       if(event.caxis.axis == 2)
       {
-        x += (event.caxis.value / 0x1500);
+        x = (event.caxis.value / rstick_motion_modifier);
       }
       else
       {
-        y += (event.caxis.value / 0x1500);
+        y = (event.caxis.value / rstick_motion_modifier);
       }
-      SDL_SendMouseMotion(NULL, 0, 0, x, y);
+      //printf("axis=%d value=%d %d/%d\n", event.caxis.axis, event.caxis.value, x, y);
+      //printf("Sending mouse motion:  %d - %d\n", x, y);
+      //SDL_WarpMouseInWindow(NULL, x, y);
+      SDL_SendMouseMotion(SDL_GetMouse()->focus, 0, SDL_TRUE, x, y);
       return true;
     }
   }
@@ -43,5 +49,10 @@ extern "C" {
 int switch_rstick_to_mouse(SDL_Event const * event)
 {
   return nswitch::rstick_to_mouse(*event);
+}
+
+void switch_rstick_motion_modifier(int x)
+{
+  nswitch::rstick_motion_modifier = x;
 }
 }
