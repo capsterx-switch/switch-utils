@@ -9,8 +9,10 @@ static int rstick_motion_modifier = 0x1500;
 
 bool rstick_to_mouse(SDL_Event const & event)
 {
-  if (event.type == SDL_JOYAXISMOTION)
+  //printf("%d\n", event.type);
+  if (event.type == SDL_JOYAXISMOTION || event.type == SDL_CONTROLLERAXISMOTION)
   {
+    //printf("%d - %d\n", event.type, event.caxis.axis);
     if (event.caxis.axis == 2 || event.caxis.axis == 3)
     {
       int x=0;
@@ -35,6 +37,14 @@ bool rstick_to_mouse(SDL_Event const & event)
   else if (event.type == SDL_JOYBUTTONDOWN || event.type == SDL_JOYBUTTONUP)
   {
     if (event.jbutton.button == (int)Switch_Joy::RSTICK)
+    {
+      SDL_SendMouseButton(NULL, 0, event.type == SDL_JOYBUTTONDOWN ? SDL_PRESSED : SDL_RELEASED, SDL_BUTTON_LEFT);
+      return true;
+    }
+  }
+  else if (event.type == SDL_CONTROLLERBUTTONDOWN || event.type == SDL_CONTROLLERBUTTONUP)
+  {
+    if (event.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK)
     {
       SDL_SendMouseButton(NULL, 0, event.type == SDL_JOYBUTTONDOWN ? SDL_PRESSED : SDL_RELEASED, SDL_BUTTON_LEFT);
       return true;
