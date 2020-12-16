@@ -7,7 +7,12 @@ $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/de
 endif
 
 TOPDIR ?= $(CURDIR)
-include $(DEVKITPRO)/libnx/switch_rules
+include $(DEVKITPRO)/devkitA64/base_rules
+#$(info $(CFLAGS))
+#$(info $(CXX))
+#$(info $(CC))
+##ifneq (aarch64-none-elf-gcc, $(CC))
+#endif
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -31,7 +36,7 @@ include $(DEVKITPRO)/libnx/switch_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	switch-utils
 BUILD		:=	build
-SOURCES		:=	src  main
+SOURCES		:=	src
 DATA		:=	data
 INCLUDES	:=	include 
 EXEFS_SRC	:=	exefs_src
@@ -44,12 +49,12 @@ APP_VERSION	:=	0.2
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE #-ftls-model=local-exec
+override ARCH	:=	-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE #-ftls-model=local-exec
 
 CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -I${DEVKITPRO}/libnx/include -I${DEVKITPRO}/portlibs/switch/include
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -I${DEVKITPRO}/libnx/include -I${DEVKITPRO}/portlibs/switch/include -I$(DEVKITPRO)/portlibs/switch/include/SDL2/
 
 CXXFLAGS	:= $(CFLAGS) -frtti -fexceptions -std=c++17
 
@@ -148,73 +153,28 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).pfs0 $(TARGET).nso $(TARGET).nro $(TARGET).nacp $(TARGET).elf \
-		$(EMBEDED_TARGET).nro $(EMBEDED_TARGET).nacp
+	@rm -fr $(BUILD) lib$(TARGET).a
 
-switch_gui:
-	@$(MAKE) -C Plutonium
-
+install:
+	mkdir -p $(prefix)/lib
+	cp $(BUILD)/libswitch-utils.a $(prefix)/lib
 
 
 
 #---------------------------------------------------------------------------------
 else
-.PHONY:	all  switch_gui 
+.PHONY:	all
 
-DEPENDS	:=	$(OFILES:.o=.d) $(SOLARUS_SWITCH_GUI) 
+DEPENDS	:=	$(OFILES:.o=.d)
 
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-all	:	$(OUTPUT).pfs0 $(OUTPUT).nro $(SOLARUS_LAUNCHER) 
-
-$(OUTPUT).pfs0	:	$(OUTPUT).nso
-
-$(OUTPUT).nso	:	$(OUTPUT).elf
-
-ifeq ($(strip $(NO_NACP)),)
-$(OUTPUT).nro	:	$(OUTPUT).elf $(OUTPUT).nacp
-else
-$(OUTPUT).nro	:	$(OUTPUT).elf
-endif
-
-$(OUTPUT).elf	:	$(OFILES) $(SOLARUS_LUA_JIT) 
-
-# make compiling silent
-%.o: %.cpp
-	@echo $(notdir $<)
-	$(CXX) -MMD -MP -MF $(DEPSDIR)/$*.d $(CXXFLAGS) -c $< -o $@ $(ERROR_FILTER)
-
-%.o: %.c
-	@echo $(notdir $<)
-	@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $< -o $@ $(ERROR_FILTER)
-
-# make linking verbose
-#%.elf:
-#	@echo linking $(notdir $@)
-#	$(LD) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
-#	$(NM) -CSn $@ > $(notdir $*.lst)
-
-luajit_make:
-	@$(MAKE) -C $(TOPDIR)/src/third_party/luajit TARGET_SYS=Switch
-
-launcher: $(OUTPUT).elf
-	nacptool --create $(EMBEDED_TITLE) $(EMBEDED_AUTHOR) $(EMBEDED_VERSION) $(TOPDIR)/$(EMBEDED_TARGET).nacp
-	echo built ... $(EMBEDED_TARGET).nacp
-	elf2nro  $(OUTPUT).elf $(TOPDIR)/$(EMBEDED_TARGET).nro --icon=$(EMBEDED_ICON) $(NROFLAGS) --nacp=$(TOPDIR)/$(EMBEDED_TARGET).nacp
-	echo built ... $(EMBEDED_TARGET).nro
-
-switch_gui:
-	$(MAKE) -C ../Plutonium
+all	:	lib$(TARGET).a 
 
 
-#---------------------------------------------------------------------------------
-# you need a rule like this for each extension you use as binary data
-#---------------------------------------------------------------------------------
-%.bin.o	:	%.bin
-#---------------------------------------------------------------------------------
-	@echo $(notdir $<)
-	@$(bin2o)
+lib$(TARGET).a	:	$(OFILES)
+
 
 -include $(DEPENDS)
 
