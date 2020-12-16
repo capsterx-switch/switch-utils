@@ -5,6 +5,12 @@ else()
 	message(FATAL_ERROR "Could not find DEVKITPRO in environment")
 endif()
 
+if(DEFINED ENV{SWITCH_UTILS})
+	set(SWITCH_UTILS $ENV{SWITCH_UTILS})
+else()
+	message(FATAL_ERROR "Could not find SWITCH_UTILS in environment")
+endif()
+
 set(CMAKE_SYSTEM_NAME Generic CACHE INTERNAL "system name")
 
 function(create_devkit DEVKIT)
@@ -56,8 +62,8 @@ endif()
 
 set(cross_prefix aarch64-none-elf-)
 set(arch_flags "-mtune=cortex-a57 -ffunction-sections -march=armv8-a+crc+crypto -mtp=soft -fPIE -D_GNU_SOURCE")
-set(inc_flags "-I${LIBNX}/include -I${DEVKITPRO}/portlibs/switch/include ${arch_flags}")
-set(link_flags "${gdb_link} -L${LIBNX}/lib -L${DEVKITPRO}/portlibs/switch/lib -specs=${LIBNX}/switch.specs ${arch_flags}")
+set(inc_flags "-I${SWITCH_UTILS}/include -I${LIBNX}/include -I${DEVKITPRO}/portlibs/switch/include ${arch_flags}")
+set(link_flags "${gdb_link} -L${LIBNX}/lib -L${SWITCH_UTILS}/build -L${DEVKITPRO}/portlibs/switch/lib -specs=${LIBNX}/switch.specs ${arch_flags}")
 
 set(CMAKE_SYSTEM_PROCESSOR aarch64 CACHE INTERNAL "processor")
 set(CMAKE_LIBRARY_ARCHITECTURE aarch64-none-elf CACHE INTERNAL "abi")
