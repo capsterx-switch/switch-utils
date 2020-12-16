@@ -19,8 +19,8 @@ bool touch_to_mouse (int screenx, int screeny, SDL_Event const & event, bool mou
        {
          int x = (float)screenx * event.tfinger.x;
          int y = (float)screeny * event.tfinger.y;
-         printf("oldx=%d newx%d - oldy=%d newy=%d\n",
-          	       mouse->last_x, x, mouse->last_y, y);
+         //printf("oldx=%d newx%d - oldy=%d newy=%d\n",
+          //	       mouse->last_x, x, mouse->last_y, y);
          //SDL_WarpMouseInWindow(NULL, x, y);
          //SDL_SendMouseMotion(NULL, 0, 0, x, y);
          //??????
