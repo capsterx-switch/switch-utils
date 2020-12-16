@@ -8,6 +8,11 @@
 #include <map>
 #include <iostream>
 #include <fstream>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <list>
+#include <chrono>
 #include "SDL_mouse_internals.h"
 #include <switch/keyboard.hpp>
 
@@ -46,42 +51,42 @@ const std::vector<std::pair<std::string, int>> Switch_Key_Mapping = {
 };
 
 auto SDLKeyStringTable = std::map<std::string, SDL_Keycode>{
-        {"APPLICATION", SDLK_APPLICATION},
-        {"BACKSPACE", SDLK_BACKSPACE},
-        {"CAPSLOCK", SDLK_CAPSLOCK},
-        {"DELETE", SDLK_DELETE},
-        {"END", SDLK_END},
-        {"ESCAPE", SDLK_ESCAPE},
-        {"FIND", SDLK_FIND},
-        {"HELP", SDLK_HELP},
-        {"HOME", SDLK_HOME},
-        {"INSERT", SDLK_INSERT},
-        {"KP1", SDLK_KP_1},
-        {"KP2", SDLK_KP_2},
-        {"KP3", SDLK_KP_3},
-        {"KP4", SDLK_KP_4},
-        {"KP5", SDLK_KP_5},
-        {"KP6", SDLK_KP_6},
-        {"KP7", SDLK_KP_7},
-        {"KP8", SDLK_KP_8},
-        {"KP9", SDLK_KP_9},
-        {"KPA", SDLK_KP_A},
-        {"KP&", SDLK_KP_AMPERSAND},
-        {"KP@", SDLK_KP_AT},
-        {"KPB", SDLK_KP_B},
-        {"KPBACKSPACE", SDLK_KP_BACKSPACE},
-        {"KP:", SDLK_KP_COLON},
-        {"KPD", SDLK_KP_D},
-        {"KP/", SDLK_KP_DIVIDE},
-        {"KPENTER", SDLK_KP_ENTER},
-        {"KP=", SDLK_KP_EQUALS},
-        {"KP-", SDLK_KP_MINUS},
-        {"KP*", SDLK_KP_MULTIPLY},
-        {"KP%", SDLK_KP_PERCENT},
-        {"KP.", SDLK_KP_PERIOD},
-        {"KP+", SDLK_KP_PLUS},
-        {"SPACE", SDLK_KP_SPACE},
-        {"TAB", SDLK_KP_TAB},
+        //{"APPLICATION", SDLK_APPLICATION},
+        //{"BACKSPACE", SDLK_BACKSPACE},
+        //{"CAPSLOCK", SDLK_CAPSLOCK},
+        //{"DELETE", SDLK_DELETE},
+        //{"END", SDLK_END},
+        //{"ESCAPE", SDLK_ESCAPE},
+        //{"FIND", SDLK_FIND},
+        //{"HELP", SDLK_HELP},
+        //{"HOME", SDLK_HOME},
+        //{"INSERT", SDLK_INSERT},
+        //{"KP1", SDLK_KP_1},
+        //{"KP2", SDLK_KP_2},
+        //{"KP3", SDLK_KP_3},
+        //{"KP4", SDLK_KP_4},
+        //{"KP5", SDLK_KP_5},
+        //{"KP6", SDLK_KP_6},
+        //{"KP7", SDLK_KP_7},
+        //{"KP8", SDLK_KP_8},
+        //{"KP9", SDLK_KP_9},
+        //{"KPA", SDLK_KP_A},
+        //{"KP&", SDLK_KP_AMPERSAND},
+        //{"KP@", SDLK_KP_AT},
+        //{"KPB", SDLK_KP_B},
+        //{"KPBACKSPACE", SDLK_KP_BACKSPACE},
+        //{"KP:", SDLK_KP_COLON},
+        //{"KPD", SDLK_KP_D},
+        //{"KP/", SDLK_KP_DIVIDE},
+        //{"KPENTER", SDLK_KP_ENTER},
+        //{"KP=", SDLK_KP_EQUALS},
+        //{"KP-", SDLK_KP_MINUS},
+        //{"KP*", SDLK_KP_MULTIPLY},
+        //{"KP%", SDLK_KP_PERCENT},
+        //{"KP.", SDLK_KP_PERIOD},
+        //{"KP+", SDLK_KP_PLUS},
+        //{"SPACE", SDLK_KP_SPACE},
+        //{"TAB", SDLK_KP_TAB},
         {"LEFT ALT", SDLK_LALT},
         {"LEFT CTRL", SDLK_LCTRL},
         {"LEFT", SDLK_LEFT},
@@ -157,9 +162,10 @@ class Switch_Key_Map::Key_Map_Impl
 {
 public:
   Key_Map_Impl(int screenx, int screeny)
-    : screenx_(screenx)
-    , screeny_(screeny)
+    : Key_Map_Impl()
   {
+     screenx_ = screenx;
+     screeny_ = screeny;
      auto mouse = SDL_GetMouse();
      printf("** INPUT: %d/%d\n", mouse->last_x, mouse->last_y);
      mouse->last_x = 0;
@@ -177,6 +183,13 @@ public:
   
   Key_Map_Impl()
   {
+     thread_ = std::thread([this]() { this->thread_run(); });
+  }
+  
+  ~Key_Map_Impl()
+  {
+    running_.store(false, std::memory_order_release);
+    thread_.join();
   }
 
   bool true_false_setting(std::string const & str, std::vector<std::string> const & args, bool & value)
@@ -262,11 +275,11 @@ public:
       return;
     }
     bool lstick_arrows=false;
-    if (true_false_setting("LSTICK_ARROWS", args, dpad_arrows))
+    if (true_false_setting("LSTICK_ARROWS", args, lstick_arrows))
     {
       if (lstick_arrows)
       {
-        set_arrows("LSTICK");
+        set_arrows("LSTICK_");
       }
       return;
     }
@@ -345,14 +358,28 @@ public:
 
   bool key_press(size_t key)
   {
-    current_keys_ |= (1 << key);
-    return send_event(SDL_KEYDOWN);
+    key = (1 << key);
+    auto ret = send_event(key, SDL_KEYDOWN);
+    current_keys_ |= key;
+
+    if (!ret)
+    {
+      ret = send_event(current_keys_, SDL_KEYDOWN);
+    }
+    return ret;
   }
   
   bool key_release(size_t key)
   {
-    auto ret = send_event(SDL_KEYUP);
-    current_keys_ &= ~(1 << key);
+    key = (1<<key);
+    auto ret = send_event(current_keys_, SDL_KEYUP);
+    current_keys_ &= ~key;
+
+    if (!ret)
+    {
+      ret = send_event(key, SDL_KEYUP);
+    }
+
     return ret;
   }
 
@@ -368,21 +395,28 @@ public:
     for (char ch : txt)
     {
       e.type = SDL_KEYDOWN;
-      ch = std::tolower(ch);
+      //ch = std::tolower(ch);
       e.key.keysym.sym = static_cast<SDL_Keycode>(ch);
+      SDL_PushEvent(&e);
+      e.type = SDL_TEXTINPUT;
+      e.text.text[0] = ch;
+      e.text.text[1] = '\0';
       SDL_PushEvent(&e);
       e.type = SDL_KEYUP;
       SDL_PushEvent(&e);
     }
-    e.type = SDL_TEXTINPUT;
-    strncpy(e.text.text, txt.c_str(), txt.size() > sizeof(e.text.text) ? sizeof(e.text.text) : txt.size());
-    SDL_PushEvent(&e);
-    
+  }
+
+  void push_event(SDL_Event const & event)
+  {
+    std::lock_guard<std::mutex> lock(lock_);
+    //printf("pushing event\n");
+    queue_.push_back(event);
   }
  
   bool event(SDL_Event const & event)
   { 
-    if (double_touch_keyboard() && event.type == SDL_FINGERDOWN)
+    if (double_touch_keyboard() && (event.type == SDL_FINGERDOWN || event.type == SDL_FINGERUP))
     {
       int numFingers = 0;
       SDL_Finger* finger0 = SDL_GetTouchFinger(event.tfinger.touchId, 0);
@@ -391,9 +425,12 @@ public:
       }
       if (numFingers == 2)
       {
-        virtual_keyboard();
+        if (event.type == SDL_FINGERDOWN)
+	{
+          virtual_keyboard();
+	}
+        return true;
       }
-      return true;
     }
     if (touch_mouse() && touch_to_mouse(screenx_, screeny_, event, mouse_movement_))
     {
@@ -408,14 +445,21 @@ public:
       //printf("Not joy button :(\n");
       return false;
     }
-    //printf("Joy button: %d - %lu\n", event.jbutton.button, current_keys_);
     if (event.type == SDL_JOYBUTTONDOWN)
     {
       return key_press(event.jbutton.button);
     }
-    else
+    else if (event.type == SDL_JOYBUTTONUP)
     {
       return key_release(event.jbutton.button);
+    }
+    else if (event.type == SDL_CONTROLLERBUTTONDOWN)
+    {
+      return key_press(event.cbutton.button);
+    }
+    else if (event.type == SDL_CONTROLLERBUTTONUP)
+    {
+      return key_release(event.cbutton.button);
     }
     return false;
   }
@@ -437,12 +481,33 @@ public:
   }
 
 private:
-  bool send_event(int type)
+  void thread_run()
   {
-    auto itr = key_map().find(current_keys_);
+    running_.store(true, std::memory_order_release);
+    printf("thread running\n");
+    while (running_.load(std::memory_order_acquire))
+    {
+      {
+        std::lock_guard<std::mutex> lock(lock_);
+        if (queue_.size() > 0)
+        {
+          printf("event!\n");
+          auto event = queue_.front();
+          SDL_PushEvent(&event);
+          queue_.pop_front();
+        }
+      }
+      std::this_thread::sleep_for (std::chrono::microseconds(5000));
+    }
+    printf("thread leaving\n");
+  }
+
+  bool send_event(size_t keys, int type)
+  {
+    auto itr = key_map().find(keys);
     if (itr == key_map().end())
     {
-      printf("no key for: %lu\n", current_keys_);
+      printf("no key for: %lu\n", keys);
       return false;
     }
     SDL_Event event;
@@ -458,14 +523,29 @@ private:
     }
     if (type == SDL_KEYDOWN)
     {
-      SDL_SetModState(static_cast<SDL_Keymod>(event.key.keysym.mod));
+      event.key.state = SDL_PRESSED;
+      //TODO:
+      //SDL_SetModState(static_cast<SDL_Keymod>(event.key.keysym.mod));
+    }
+    else
+    {
+      event.key.state = SDL_RELEASED;
     }
     //printf("Sending event %d - %d\n", event.key.keysym.sym, event.key.keysym.mod);
-    printf("Sending event: %d\n", event.key.keysym.sym);
+    //printf("Sending event: %d\n", event.key.keysym.sym);
     SDL_PushEvent(&event);
     if (type == SDL_KEYUP)
     {
-      SDL_SetModState(KMOD_NONE);
+      //TODO:
+      //SDL_SetModState(KMOD_NONE);
+    }
+    if (event.key.keysym.sym >= 32 && event.key.keysym.sym <= 126 && type == SDL_KEYDOWN)
+    {
+	    //printf("sending text input\n");
+      event.type = SDL_TEXTINPUT;
+      event.text.text[0] = event.key.keysym.sym;
+      event.text.text[1] = '\0';
+      SDL_PushEvent(&event);
     }
     return true;
   }
@@ -512,6 +592,10 @@ private:
   size_t current_keys_=0U;
   bool mouse_movement_=true;
   std::array<Key_Mapping_Config, 10> configs_;
+  std::thread thread_;
+  std::atomic<bool> running_;
+  std::mutex lock_;
+  std::list<SDL_Event> queue_;
 };
 
 Switch_Key_Map::Switch_Key_Map()
