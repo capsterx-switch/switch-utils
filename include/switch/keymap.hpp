@@ -1,6 +1,7 @@
 #pragma once
 #include <iosfwd>
 #include <memory>
+#include <string>
 
 union SDL_Event;
 
@@ -13,6 +14,7 @@ public:
    Switch_Key_Map();
    ~Switch_Key_Map();
    void load_file(std::ifstream &);
+   void load_file(std::string const &);
    bool event(SDL_Event const &);
    void disable(bool);
    void screen(int x, int y);

@@ -13,6 +13,7 @@
 #include <mutex>
 #include <list>
 #include <chrono>
+#include <stdexcept>
 #include "SDL_mouse_internals.h"
 #include <switch/keyboard.hpp>
 
@@ -631,6 +632,19 @@ load_file(std::ifstream & keyfile)
   }
 }
 
+void
+Switch_Key_Map::
+load_file(std::string const & file)
+{
+  std::ifstream myfile;
+  myfile.open(file);
+  if (!myfile.is_open())
+  {
+    throw std::runtime_error("Bad file");
+  }
+  load_file(myfile);
+}
+
 bool 
 Switch_Key_Map::
 event(SDL_Event const & event)
@@ -691,20 +705,15 @@ Switch_Key_Map * switch_keymap_create()
 
 int switch_keymap_load_from_file(Switch_Key_Map * km, char const * file)
 {
-  std::ifstream myfile;
-  try {
-    //printf("Opening file %s\n", file);
-    myfile.open(file);
-    if (!myfile.is_open())
-    {
-      return -1;
-    }
-    km->k->load_file(myfile);
-  } catch (std::exception const &) {
-    printf("Got exception\n");
-    return -1;
+  try
+  {
+    (*km)->load_file(file);
+    return true;
   }
-  return true;
+  catch (std::exception const &)
+  {
+    return 0;
+  }
 }
 
 void switch_keymap_set_mouse_movement(Switch_Key_Map * km, int x)
