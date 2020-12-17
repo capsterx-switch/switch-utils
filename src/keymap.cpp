@@ -342,6 +342,7 @@ public:
   	} else if (str.length() == 1) {
             auto c = static_cast<unsigned char>(str[0]);
             k.sym = static_cast<SDL_Keycode>(c);
+	    k.scancode = SDL_GetScancodeFromKey(k.sym);
 	    break;
         }
 	auto itr = SDLKeyStringTable.find(str);
@@ -351,6 +352,7 @@ public:
           return;
         }
 	k.sym = itr->second;
+        k.scancode = SDL_GetScancodeFromKey(k.sym);
       }
     }
     printf("Mapping %lu to %d.%d\n", switch_key, k.mod, k.sym);
