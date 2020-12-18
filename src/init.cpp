@@ -1,8 +1,13 @@
 #include "switch/init.hpp"
 #include <switch.h>
 #include <cstdio>
+#include <unistd.h>
 
 namespace nswitch {
+
+namespace {
+Result switch_romfs;
+}
 
 void init()
 {
@@ -13,13 +18,16 @@ void init()
   socketInitializeDefault();
   nxlinkConnectToHost(true, false);
   printf("connected to hostd\n");
-  romfsInit();
+  switch_romfs = romfsInit();
   printf("init finished\n");
 }
 
 void deinit()
 {
-  romfsExit();
+  if (R_SUCCEEDED(switch_romfs))
+  {
+    romfsExit();
+  }
   socketExit();
   nsExit();
 }
