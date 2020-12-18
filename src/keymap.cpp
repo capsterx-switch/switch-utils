@@ -18,6 +18,11 @@
 #include <switch/keyboard.hpp>
 
 #define KMOD_SWITCH_KEYBOARD (KMOD_RESERVED + 1)
+#define KMOD_SWITCH_MOUSE_LEFT (KMOD_RESERVED + 1)
+#define KMOD_SWITCH_MOUSE_MIDDLE (KMOD_RESERVED + 2)
+#define KMOD_SWITCH_MOUSE_RIGHT (KMOD_RESERVED + 3)
+#define KMOD_SWITCH_MOUSE_X1 (KMOD_RESERVED + 4)
+#define KMOD_SWITCH_MOUSE_X2 (KMOD_RESERVED + 5)
 
 namespace {
 const std::vector<std::pair<std::string, int>> Switch_Key_Mapping = {
@@ -317,9 +322,38 @@ public:
     for (auto str : keyboard_key)
     {
       trim(str);
+      //HACK:
+      //keyboard / mouse are not keyboard events
+      //for now to simplify the lookup we just
+      //fake themm as modified keys
       if (str == "KEYBOARD")
       {
         k.mod = static_cast<SDL_Keymod>(KMOD_SWITCH_KEYBOARD);
+	break;
+      }
+      else if (str == "MOUSE_LEFT")
+      {
+        k.mod = static_cast<SDL_Keymod>(KMOD_SWITCH_MOUSE_LEFT);
+	break;
+      }
+      else if (str == "MOUSE_MIDDLE")
+      {
+        k.mod = static_cast<SDL_Keymod>(KMOD_SWITCH_MOUSE_MIDDLE);
+	break;
+      }
+      else if (str == "MOUSE_RIGHT")
+      {
+        k.mod = static_cast<SDL_Keymod>(KMOD_SWITCH_MOUSE_RIGHT);
+	break;
+      }
+      else if (str == "MOUSE_X1")
+      {
+        k.mod = static_cast<SDL_Keymod>(KMOD_SWITCH_MOUSE_X1);
+	break;
+      }
+      else if (str == "MOUSE_X2")
+      {
+        k.mod = static_cast<SDL_Keymod>(KMOD_SWITCH_MOUSE_X2);
 	break;
       }
       else if (str == "ALT")
@@ -505,6 +539,33 @@ private:
     printf("thread leaving\n");
   }
 
+  bool send_mouse_button(int type, size_t mod)
+  {
+    int mouse_button;
+    switch(mod)
+    {
+      case KMOD_SWITCH_MOUSE_LEFT:
+        mouse_button = SDL_BUTTON_LEFT;
+	break;
+      case KMOD_SWITCH_MOUSE_MIDDLE:
+	mouse_button = SDL_BUTTON_MIDDLE;
+	break;
+      case KMOD_SWITCH_MOUSE_RIGHT:
+        mouse_button = SDL_BUTTON_RIGHT;
+	break;
+      case KMOD_SWITCH_MOUSE_X1:
+        mouse_button = SDL_BUTTON_X1;
+	break;
+      case KMOD_SWITCH_MOUSE_X2:
+        mouse_button = SDL_BUTTON_X2;
+	break;
+      default:
+	return false;
+    };
+    SDL_SendMouseButton(NULL, 0, type == SDL_JOYBUTTONDOWN ? SDL_PRESSED : SDL_RELEASED, mouse_button);
+    return true;
+  }
+
   bool send_event(size_t keys, int type)
   {
     auto itr = key_map().find(keys);
@@ -523,6 +584,16 @@ private:
         virtual_keyboard();
       }
       return true;
+    }
+    if (
+         event.key.keysym.mod == KMOD_SWITCH_MOUSE_LEFT ||
+         event.key.keysym.mod == KMOD_SWITCH_MOUSE_MIDDLE ||
+         event.key.keysym.mod == KMOD_SWITCH_MOUSE_RIGHT ||
+         event.key.keysym.mod == KMOD_SWITCH_MOUSE_X1 ||
+         event.key.keysym.mod == KMOD_SWITCH_MOUSE_X2
+       )
+    {
+      return send_mouse_button(type, event.key.keysym.mod);
     }
     if (type == SDL_KEYDOWN)
     {
@@ -619,6 +690,7 @@ void
 Switch_Key_Map::
 load_file(std::ifstream & keyfile)
 {
+
   //printf("Parsing file...\n");
   char temp[1024]; // 1024 should be long enough
   while (!keyfile.eof()) {

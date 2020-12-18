@@ -40,7 +40,13 @@ keyboard key can be a key and a modifier modifiers are:
 
 you can do ALT-X or SHIFT-CTRL-F 
 
-you can also use KEYBOARD to bring up the switch virtual keyboard
+Special 'KEYS'
+* KEYBOARD to bring up the switch virtual keyboard
+* MOUSE\_LEFT - left mouse click
+* MOUSE\_MIDDLE - middle mouse click
+* MOUSE\_RIGHT - right mouse click
+* MOUSE\_X1 - X1?
+* MOUSE\_X2 - X2?
 
 some examples 
 
