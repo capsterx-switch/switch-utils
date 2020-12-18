@@ -17,12 +17,14 @@
 #include "SDL_mouse_internals.h"
 #include <switch/keyboard.hpp>
 
-#define KMOD_SWITCH_KEYBOARD (KMOD_RESERVED + 1)
-#define KMOD_SWITCH_MOUSE_LEFT (KMOD_RESERVED + 1)
-#define KMOD_SWITCH_MOUSE_MIDDLE (KMOD_RESERVED + 2)
-#define KMOD_SWITCH_MOUSE_RIGHT (KMOD_RESERVED + 3)
-#define KMOD_SWITCH_MOUSE_X1 (KMOD_RESERVED + 4)
-#define KMOD_SWITCH_MOUSE_X2 (KMOD_RESERVED + 5)
+enum {
+KMOD_SWITCH_KEYBOARD=(KMOD_RESERVED + 1),
+KMOD_SWITCH_MOUSE_LEFT,
+KMOD_SWITCH_MOUSE_MIDDLE,
+KMOD_SWITCH_MOUSE_RIGHT,
+KMOD_SWITCH_MOUSE_X1,
+KMOD_SWITCH_MOUSE_X2
+};
 
 namespace {
 const std::vector<std::pair<std::string, int>> Switch_Key_Mapping = {
