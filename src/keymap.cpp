@@ -562,9 +562,15 @@ private:
         mouse_button = SDL_BUTTON_X2;
 	break;
       default:
+	printf("no mapped button\n");
 	return false;
     };
-    SDL_SendMouseButton(NULL, 0, type == SDL_JOYBUTTONDOWN ? SDL_PRESSED : SDL_RELEASED, mouse_button);
+    int event_type = SDL_RELEASED;
+    if (type == SDL_KEYDOWN)
+    {
+      event_type = SDL_PRESSED;
+    }
+    SDL_SendMouseButton(NULL, 0, event_type, mouse_button);
     return true;
   }
 
