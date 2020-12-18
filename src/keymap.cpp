@@ -434,8 +434,8 @@ public:
     for (char ch : txt)
     {
       e.type = SDL_KEYDOWN;
-      //ch = std::tolower(ch);
       e.key.keysym.sym = static_cast<SDL_Keycode>(ch);
+      e.key.keysym.scancode = SDL_GetScancodeFromKey(e.key.keysym.sym);
       SDL_PushEvent(&e);
       e.type = SDL_TEXTINPUT;
       e.text.text[0] = ch;
@@ -579,7 +579,7 @@ private:
     auto itr = key_map().find(keys);
     if (itr == key_map().end())
     {
-      printf("no key for: %lu\n", keys);
+      //printf("no key for: %lu\n", keys);
       return false;
     }
     SDL_Event event;
@@ -699,17 +699,17 @@ Switch_Key_Map::
 load_file(std::ifstream & keyfile)
 {
 
-  //printf("Parsing file...\n");
+  printf("Parsing file...\n");
   char temp[1024]; // 1024 should be long enough
   while (!keyfile.eof()) {
-    //printf("Read line\n");
+    printf("Read line\n");
     keyfile.getline(temp, 1024);
-    //printf("line: %s\n", temp);
+    printf("line: %s\n", temp);
     if (keyfile.gcount() >= 1023) {
       std::cout << "Keybinder: parse error: line too long. Skipping rest of file." << std::endl;
       break;
     }
-    //printf("Try parse\n");
+    printf("Try parse\n");
     impl_->parse_line(temp);
   }
 }
