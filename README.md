@@ -65,3 +65,89 @@ If you want to point and click use TOUCH\_MOUSE\_ABS=TRUE
 if you want the right stick to be a mouse RSTICK\_MOUSE=TRUE
 
 if you dont want to waste a key for the keyboard you can use DOUBLE\_TOUCH\_KEYBOARD=TRUE
+
+
+The list of keys you can map to are:
+* any single letter printable char
+* APPLICATION
+* CAPSLOCK
+* DELETE
+* ESCAPE
+* FIND
+* HELP
+* KP&
+* KP@
+* KPB
+* KPBACKSPACE
+* KP:
+* KPD
+* KP
+* KPSPACE
+* KPTAB
+* LEFT ALT
+* LEFT CTRL
+* LEFT
+* LEFT GUI
+* LEFT SHIFT
+* PAGEDOWN
+* PAGEUP
+* PRINTSCREEN
+* RIGHT ALT
+* RIGHT CTRL
+* RETURN
+* RETURN2
+* RIGHT GUI
+* RIGHT
+* RIGHT SHIFT
+* SCROLLLOCK
+* SELECT
+* SPACE
+* TAB
+* BACKSPACE
+* TAB
+* ENTER
+* PAUSE
+* ESC
+* SPACE
+* DEL
+* KP0
+* KP1
+* KP2
+* KP3
+* KP4
+* KP5
+* KP6
+* KP7
+* KP8
+* KP9
+* KP0
+* KP.
+* KP/
+* KP\*
+* KP-
+* KP+
+* KP\_ENTER
+* UP
+* DOWN
+* RIGHT
+* LEFT
+* INSERT
+* HOME
+* END
+* PAGEUP
+* PAGEDOWN
+* F1
+* F2
+* F3
+* F4
+* F5
+* F6
+* F7
+* F8
+* F9
+* F10
+* F11
+* F12
+* F13
+* F14
+* F15
